@@ -2,40 +2,43 @@
 #include <stdlib.h>
 #include "image.h"
 
-/* prototype */
-up_jpeg decompress(const char *filename);
+/* function prototypes */
+up_jpeg decompress(const char *img_file);
+int compress(const char *out_file, const up_jpeg *img, int quality);
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        printf("Usage: %s <input.jpg>\n", argv[0]);
+    if (argc != 3) {
+        printf("Usage: %s <input.jpg> <output.jpg>\n", argv[0]);
         return 1;
     }
 
-    const char *filename = argv[1];
+    const char *input  = argv[1];
+    const char *output = argv[2];
 
-    up_jpeg img = decompress(filename);
+    /* Decompress */
+    up_jpeg img = decompress(input);
 
     if (img.pixel_data == NULL) {
         printf("Decompression failed.\n");
         return 1;
     }
 
-    /* Basic sanity checks */
-    printf("JPEG decompressed successfully!\n");
-    printf("Width   : %u pixels\n", img.width);
-    printf("Height  : %u pixels\n", img.height);
-    printf("Channels: %u\n", img.channels);
+    printf("Decompressed image:\n");
+    printf("  Width   : %d\n", img.width);
+    printf("  Height  : %d\n", img.height);
+    printf("  Channels: %d\n", img.channels);
 
-    /* Inspect first pixel */
-    printf("First pixel values:\n");
-    for (unsigned int c = 0; c < img.channels; c++) {
-        printf("  Channel %u: %u\n", c, img.pixel_data[c]);
+    /* Compress */
+    if (!compress(output, &img, 90)) {
+        printf("Compression failed.\n");
+        free(img.pixel_data);
+        return 1;
     }
 
-    /* Free image memory */
-    free(img.pixel_data);
+    printf("JPEG written successfully: %s\n", output);
 
+    free(img.pixel_data);
     return 0;
 }
 
