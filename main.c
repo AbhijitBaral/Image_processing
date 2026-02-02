@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include "image.h"
 
-/* function prototypes */
-up_jpeg decompress(const char *img_file);
+/* prototypes */
+up_jpeg *decompress(const char *img_file);
+void rgb_to_grayscale(up_jpeg *img);
 int compress(const char *out_file, const up_jpeg *img, int quality);
 
 int main(int argc, char *argv[])
@@ -13,32 +14,40 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    const char *input  = argv[1];
-    const char *output = argv[2];
+    up_jpeg *img = decompress(argv[1]);
 
-    /* Decompress */
-    up_jpeg img = decompress(input);
-
-    if (img.pixel_data == NULL) {
-        printf("Decompression failed.\n");
+    if (!img || !img->pixel_data) {
+        printf("Decompression failed\n");
         return 1;
     }
 
     printf("Decompressed image:\n");
-    printf("  Width   : %d\n", img.width);
-    printf("  Height  : %d\n", img.height);
-    printf("  Channels: %d\n", img.channels);
+    printf("  Width   : %d\n", img->width);
+    printf("  Height  : %d\n", img->height);
+    printf("  Channels: %d\n", img->channels);
 
-    /* Compress */
-    if (!compress(output, &img, 90)) {
-        printf("Compression failed.\n");
-        free(img.pixel_data);
-        return 1;
+    printf("First pixel values:\n");
+    for (int c = 0; c < img->channels; c++) {
+        printf("  channel %d = %u\n", c, img->pixel_data[c]);
     }
 
-    printf("JPEG written successfully: %s\n", output);
+    /* Optional: test grayscale */
+    rgb_to_grayscale(img);
 
-    free(img.pixel_data);
+    printf("After grayscale:\n");
+    printf("  Channels: %d\n", img->channels);
+
+    /* Optional: test compression */
+    if (!compress(argv[2], img, 90)) {
+        printf("Compression failed\n");
+    } else {
+        printf("JPEG written to %s\n", argv[2]);
+    }
+
+    /* Cleanup */
+    free(img->pixel_data);
+    free(img);
+
     return 0;
 }
 

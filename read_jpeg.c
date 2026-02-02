@@ -7,7 +7,7 @@
 //This function follows the standard pipeline of the decompression of jpeg as per the official manual
 // Output is a single line unsigned char
 
-up_jpeg decompress(const char *img_file){
+up_jpeg *decompress(const char *img_file){
 	//~~~~~~~~~~~~~~~stage 1~~~~~~~~~~~~~~~	
 	struct jpeg_decompress_struct jobj;
 
@@ -37,7 +37,7 @@ up_jpeg decompress(const char *img_file){
 	int width = jobj.output_width;
 	int height= jobj.output_height;
 
-	unsigned char* pixel_data= malloc(height * width * 3);
+	unsigned char* pixel_data= malloc(height * width * jobj.output_components);
 
 	unsigned char* rowptr;
 	while(jobj.output_scanline < height){
@@ -45,18 +45,19 @@ up_jpeg decompress(const char *img_file){
 		jpeg_read_scanlines(&jobj, &rowptr, 1);
 	}
 
-	up_jpeg img;
-	img.height = height;
-	img.width = width;
-	img.pixel_data = pixel_data;
-	img.channels = jobj.output_components;
+	up_jpeg* img = malloc(sizeof(up_jpeg));
+	if(!img) exit(1);
 
-	//~~~~~~~~~~~~~~~stage 6~~~~~~~~~~~~~~~
+	img->height = height;
+	img->width = width;
+	img->pixel_data = pixel_data;
+	img->channels = jobj.output_components;
+
+	//~-~~~~~~~~~~~~~stage 6~~~~~~~~~~~~~~~
 	jpeg_finish_decompress(&jobj);
 	jpeg_destroy_decompress(&jobj);
 
 	fclose(fp);	
 
-
-	return img;
+	return (img);
 }
